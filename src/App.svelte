@@ -21,6 +21,9 @@
 
   let observer;
 
+  // Track if tableau script has been loaded so we don't load multiple times
+  let tableauScriptLoaded = false;
+
   onMount(() => {
     observer = new IntersectionObserver(handleIntersect, {
       root: null,
@@ -31,8 +34,25 @@
     const elements = document.querySelectorAll('.step');
     elements.forEach(el => observer.observe(el));
 
-    return () => observer.disconnect();
+    // Subscribe to activeStep changes to load Tableau script only for step 2
+    const unsubscribe = activeStep.subscribe(value => {
+      if (value === 2 && !tableauScriptLoaded) {
+        loadTableauScript();
+        tableauScriptLoaded = true;
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+      unsubscribe();
+    };
   });
+
+  function loadTableauScript() {
+    const scriptElement = document.createElement('script');
+    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+    document.body.appendChild(scriptElement);
+  }
 </script>
 
 <style global>
@@ -80,6 +100,12 @@
     color: #007acc;
     text-align: center;
   }
+  .tableauPlaceholder {
+    position: relative;
+    width: 1016px;
+    height: 991px;
+    background: white;
+  }
 </style>
 
 <div class="container">
@@ -96,7 +122,38 @@
     {#if $activeStep === 1}
       <div class="graphic-content">🌍 Intro Image or Animation</div>
     {:else if $activeStep === 2}
-      <div class="graphic-content">📈 CO₂ Level Chart Placeholder</div>
+      <div class="graphic-content">
+        <div
+          class="tableauPlaceholder"
+          id="viz1747330239230"
+          style="position: relative; width: 1016px; height: 991px;"
+        >
+          <noscript>
+            <a href="#">
+              <img
+                alt="Global Surface Temperature Anomaly & Trend Analysis"
+                src="https://public.tableau.com/static/images/Gl/GlobalSurfaceTemperatures/GlobalSurfaceTemperatureAnomalyTrendAnalysis/1_rss.png"
+                style="border: none"
+              />
+            </a>
+          </noscript>
+          <object class="tableauViz" style="display:none;">
+            <param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F" />
+            <param name="embed_code_version" value="3" />
+            <param name="site_root" value="" />
+            <param name="name" value="GlobalSurfaceTemperatures/GlobalSurfaceTemperatureAnomalyTrendAnalysis" />
+            <param name="tabs" value="no" />
+            <param name="toolbar" value="yes" />
+            <param name="static_image" value="https://public.tableau.com/static/images/Gl/GlobalSurfaceTemperatures/GlobalSurfaceTemperatureAnomalyTrendAnalysis/1.png" />
+            <param name="animate_transition" value="yes" />
+            <param name="display_static_image" value="yes" />
+            <param name="display_spinner" value="yes" />
+            <param name="display_overlay" value="yes" />
+            <param name="display_count" value="yes" />
+            <param name="language" value="en-US" />
+          </object>
+        </div>
+      </div>
     {:else if $activeStep === 3}
       <div class="graphic-content">🔥 Climate Impact Visualization</div>
     {:else if $activeStep === 4}
